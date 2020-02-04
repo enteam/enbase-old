@@ -15,9 +15,10 @@
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test:cov": "jest --coverage --detectOpenHandles",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "codecov": "codecov"
   },
   "dependencies": {
     "@nestjs/common": "^6.7.2",
@@ -30,6 +31,7 @@
     "adm-zip": "^0.4.13",
     "class-transformer": "^0.2.3",
     "class-validator": "^0.11.0",
+    "codecov": "^3.6.4",
     "lnk": "^1.1.0",
     "mockgoose-fix": "^7.3.6",
     "mongoose": "^5.8.9",
