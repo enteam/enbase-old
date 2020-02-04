@@ -8,7 +8,7 @@ export const mockgooseProvider = {
         const mockgoose = new Mockgoose(mongoose);
         mockgoose.helper.setDbVersion('3.4.3');
         mockgoose.prepareStorage().then(async () => {
-            await mongoose.connect('mongodb://example.com/testing'); // you can add here anything !
+            await mongoose.connect('mongodb://localhost/testing');
         });
         return mongoose;
     },
