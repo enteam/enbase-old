@@ -17,6 +17,7 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - run: sudo docker run --name mongo -d -p 27017:27017 mongo
     - run: yarn
     - run: yarn test
     - run: bash <(curl -s https://codecov.io/bash)
