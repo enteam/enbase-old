@@ -6,14 +6,22 @@ import {join} from 'path';
 import * as Zip from 'adm-zip';
 import * as util from 'util';
 import {exec} from 'child_process';
-import * as lnk from 'lnk';
+import {ProjectsService} from '../projects/projects.service';
 
 const run = util.promisify(exec);
 
 @Injectable()
 export class FunctionsService {
 
+    constructor(private readonly projectsService: ProjectsService) {
+    }
+
+    async onModuleInit() {
+        await this.loadAll();
+    }
+
     private readonly logger = new Logger(FunctionsService.name);
+    private functions: { [projectName: string]: { [functionName: string]: { type: string, handler: any } } } = {};
 
     async deploy(project: Project, code: Buffer): Promise<Deployment> {
         const deployedAt = (new Date()).getTime();
@@ -28,6 +36,7 @@ export class FunctionsService {
         await this.install(codePath, project);
         project.functionsCodePath = codePath;
         await project.save();
+        await this.load(project);
         return {
             project,
             deployedAt,
@@ -55,6 +64,45 @@ export class FunctionsService {
         if (!existsSync(path)) {
             mkdirSync(path);
         }
+    }
+
+    async loadAll() {
+        for (const project of await this.projectsService.index()) {
+            this.load(project);
+        }
+    }
+
+    async load(project: Project) {
+        const self = this;
+        // @ts-ignore
+        global.enbase = {
+            functions: {
+                onRequest(handler: any) {
+                    return {
+                        type: 'http',
+                        handler,
+                    };
+                },
+            },
+        };
+        if (project.functionsCodePath != null) {
+            const mod = require(join(project.functionsCodePath, 'index.js'));
+            if (self.functions[project.name] == null) {
+                self.functions[project.name] = {};
+            }
+            for (const [k, v] of Object.entries(mod)) {
+                self.functions[project.name][k] = v as { type: 'string', handler: any };
+                this.logger.log(`[${project.name}] Loaded function: ${k}`);
+            }
+        }
+    }
+
+    async execute(projectName: string, functionName: string, request: any, response: any): Promise<any> {
+        const func = this.functions[projectName][functionName];
+        if (func.type === 'http') {
+            func.handler(request, response);
+        }
+        return null;
     }
 
 }
