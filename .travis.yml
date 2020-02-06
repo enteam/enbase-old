@@ -1,7 +1,18 @@
-services: mongodb
+sudo: false
+services:
+  - mongodb
+  - docker
 language: node_js
+before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 node_js:
   - 8
   - 10
   - 11
-script: yarn test:cov && yarn codecov
+script:
+  - yarn test:cov
+  - yarn codecov
+  - docker build -t enteam/enbase:build-$TRAVIS_BUILD_ID .
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then docker tag enteam/enbase:build-$TRAVIS_BUILD_ID enteam/enbase; fi
+  - docker push enteam/enbase:build-$TRAVIS_BUILD_ID
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then docker push enteam/enbase; fi
